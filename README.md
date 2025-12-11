@@ -40,6 +40,16 @@ JSCodeSlicing (**taint_slicing** folder) is a **static analysis tool** designed 
 
 ---
 
+## Dataset
+
+This research uses the malicious package dataset provided by Wang et al. in their repository [MalPacDetector](https://github.com/CGCL-codes/MalPacDetector-core)    
+The dataset is **not publicly available** due to security reasons and its unpublished status.  
+
+We have obtained permission to use it for our research.  
+If you wish to access the dataset, please contact the original authors directly: hust_jianw@hust.edu.cn.
+
+---
+
 ## 🚀 Quick Start
 
 Choose the method that works best for you:
