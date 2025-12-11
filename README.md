@@ -1,14 +1,12 @@
 # JSCodeSlicing
 
-> **A powerful static analysis tool for detecting malicious JavaScript code using taint analysis and code slicing techniques.**
-
 [![Scala](https://img.shields.io/badge/Scala-3.6.4-red.svg)](https://www.scala-lang.org/)
 [![Joern](https://img.shields.io/badge/Joern-4.0.436-blue.svg)](https://joern.io/)
 [![Docker](https://img.shields.io/badge/Docker-Supported-blue.svg)](https://www.docker.com/)
 
 ## 🎯 Overview
 
-JSCodeSlicing is a **static analysis tool** designed to detect malicious patterns in JavaScript code by performing taint analysis and code slicing. It uses **Code Property Graphs (CPG)** powered by [Joern](https://joern.io/) to identify data flows from untrusted sources (e.g., `process.argv`, network requests) to dangerous sinks (e.g., `eval()`, file writes, command execution).
+JSCodeSlicing (**taint_slicing** folder) is a **static analysis tool** designed to detect malicious patterns in JavaScript code by performing taint analysis and code slicing. It uses **Code Property Graphs (CPG)** powered by [Joern](https://joern.io/) to identify data flows from untrusted sources (e.g., `process.argv`, network requests) to dangerous sinks (e.g., `eval()`, file writes, command execution).
 
 ### Why JSCodeSlicing?
 
@@ -230,7 +228,7 @@ docker rm malware-test
 ## 📁 Project Structure
 
 ```
-JSCodeSlicing/
+taint_slicing/
 ├── src/
 │   ├── main/
 │   │   ├── scala/
@@ -483,12 +481,10 @@ sbt scalafmt
 
 ---
 
-# MalLLM - LLM-Powered Malicious Code Detection via Code Slicing
-This project builds an LLM-powered security analysis system that uses code slicing to automatically detect malicious code inside npm packages by extracting relevant code slices and evaluating them for harmful behavior.
-# Workflow Design
-<img width="1015" height="758" alt="Screenshot 2025-11-13 at 15 42 58" src="https://github.com/user-attachments/assets/25b947b9-54f4-4354-a16b-76a2d275cd66" />
+# Automated Malicious Code Detection using Large Language Models
+An LLM-powered security analysis system that uses code slicing to automatically detect malicious code inside npm packages by extracting relevant code slices and evaluating them for harmful behavior (in **prompting** folder).
 
-# Installation
+## Installation
 1. Create a vitural environment and activate it
 ```bash
 python3 -m venv venv
@@ -501,7 +497,7 @@ source venv/bin/active
 ```bash
 pip install -r requirements.txt
 ```
-# Usage
+## Usage
 1. Create your own config json file to set up your favorite config and model
 
  For example:
